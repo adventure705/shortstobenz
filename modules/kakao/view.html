@@ -1,0 +1,176 @@
+<style>
+    .kakao-module {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .input-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .input-group label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .data-table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+        color: var(--text-muted);
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .data-table th:hover {
+        color: var(--primary-color);
+    }
+
+    .data-table tr:hover td {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .link-cell {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .link-cell a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .link-cell a:hover {
+        text-decoration: underline;
+    }
+
+    .actions-cell {
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .sort-icon {
+        font-size: 0.75rem;
+        margin-left: 4px;
+        opacity: 0.5;
+    }
+
+    .sort-asc .sort-icon::before {
+        content: "\f0de";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+    }
+
+    .sort-desc .sort-icon::before {
+        content: "\f0dd";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+    }
+
+    /* Edit Mode Styles */
+    .editing-row input {
+        width: 100%;
+        padding: 4px;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="kakao-module">
+    <!-- Input Section -->
+    <div class="card">
+        <h3>새 카톡 자료 추가</h3>
+        <div class="input-grid" id="inputForm">
+            <div class="input-group">
+                <label>날짜</label>
+                <input type="date" id="inp_date">
+            </div>
+            <div class="input-group">
+                <label>릴리즈 링크</label>
+                <input type="text" id="inp_link" placeholder="https://...">
+            </div>
+            <div class="input-group">
+                <label>비고</label>
+                <input type="text" id="inp_note" placeholder="메모...">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" id="addBtn"><i class="fa-solid fa-plus"></i> 추가하기</button>
+        </div>
+    </div>
+
+    <!-- List Section -->
+    <div class="card">
+        <div class="toolbar">
+            <h3>카톡 자료 목록 <span id="countBadge" style="font-size:0.8em; color:var(--text-muted)">(0)</span></h3>
+            <div id="bulkActions">
+                <button class="btn btn-secondary" id="toggleEditModeBtn"><i class="fa-solid fa-pen"></i> 전체 수정
+                    모드</button>
+            </div>
+        </div>
+
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th data-sort="date" style="width:150px">날짜 <span class="sort-icon"></span></th>
+                        <th data-sort="link">릴리즈 링크 <span class="sort-icon"></span></th>
+                        <th data-sort="note">비고 <span class="sort-icon"></span></th>
+                        <th style="width: 100px; text-align: right;">관리</th>
+                    </tr>
+                </thead>
+                <tbody id="kakaoTableBody">
+                    <!-- Rows will be injected -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

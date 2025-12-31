@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쇼츠투벤츠</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 style="font-size:1.3rem">쇼츠투벤츠</h2>
+                <button id="editSidebarBtn" class="icon-btn" title="메뉴 편집"><i
+                        class="fa-solid fa-pen-to-square"></i></button>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebarNav">
+                <!-- Navigation items will be injected here -->
+            </nav>
+
+            <!-- User profile removed -->
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="pageTitle">대시보드</h1>
+                <div class="top-bar-actions">
+                    <div class="search-global">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="globalSearchInput" placeholder="전체 검색...">
+                    </div>
+                </div>
+            </header>
+
+            <div id="contentArea" class="content-area">
+                <!-- Module content will be loaded here -->
+                <div class="welcome-screen">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <h3>메뉴를 선택해주세요</h3>
+                    <p>왼쪽 사이드바에서 원하는 기능을 선택하여 작업을 시작하세요.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js" type="module"></script>
+</body>
+
+</html>
