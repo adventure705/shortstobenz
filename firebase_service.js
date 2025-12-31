@@ -123,6 +123,9 @@ export class DataStore {
             });
         } catch (e) {
             console.error(`Save Error ${key}:`, e);
+            if (e.code === 'permission-denied') {
+                alert(`[저장 실패] 권한이 없습니다.\n\nFirebase Console > Firestore Database > [규칙] 탭에서 다음 내용을 허용해주세요:\n\nallow read, write: if true;`);
+            }
         }
     }
 }
