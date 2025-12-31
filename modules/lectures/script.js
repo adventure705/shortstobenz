@@ -9,6 +9,8 @@ export default {
     searchQuery: '',
     container: null,
     lectureTypes: ['정규강의', '특강', '숏츠 분석', '기타'],
+    instructors: [],
+    cohorts: [],
 
     async init(container) {
         this.container = container;
@@ -25,13 +27,19 @@ export default {
 
     loadSettings() {
         const types = localStorage.getItem('lms_lecture_types');
-        if (types) {
-            this.lectureTypes = JSON.parse(types);
-        }
+        if (types) this.lectureTypes = JSON.parse(types);
+
+        const instructors = localStorage.getItem('lms_instructors');
+        if (instructors) this.instructors = JSON.parse(instructors);
+
+        const cohorts = localStorage.getItem('lms_cohorts');
+        if (cohorts) this.cohorts = JSON.parse(cohorts);
     },
 
     saveSettings() {
         localStorage.setItem('lms_lecture_types', JSON.stringify(this.lectureTypes));
+        localStorage.setItem('lms_instructors', JSON.stringify(this.instructors));
+        localStorage.setItem('lms_cohorts', JSON.stringify(this.cohorts));
         this.render();
     },
 
@@ -45,23 +53,54 @@ export default {
         const addBtn = this.container.querySelector('#addBtn');
         if (addBtn) addBtn.onclick = () => this.addItem();
 
-        // Type Manager Button
+        // --- Type Manager ---
         const typeManagerBtn = this.container.querySelector('#typeManagerBtn');
         if (typeManagerBtn) typeManagerBtn.onclick = () => this.openTypeManager();
 
-        // Modal Close
-        const closeBtn = this.container.querySelector('#closeTypeManagerBtn');
-        if (closeBtn) closeBtn.onclick = () => this.closeTypeManager();
+        const closeTypeBtn = this.container.querySelector('#closeTypeManagerBtn');
+        if (closeTypeBtn) closeTypeBtn.onclick = () => this.closeTypeManager();
 
-        // Modal Add Type Button
         const addNewTypeBtn = this.container.querySelector('#addNewTypeBtn');
         if (addNewTypeBtn) addNewTypeBtn.onclick = () => this.addTypeFromModal();
 
-        // Modal Input Enter
         const newTypeInput = this.container.querySelector('#newTypeInput');
         if (newTypeInput) {
             newTypeInput.onkeypress = (e) => {
                 if (e.key === 'Enter') this.addTypeFromModal();
+            }
+        }
+
+        // --- Instructor Manager ---
+        const instructorManagerBtn = this.container.querySelector('#instructorManagerBtn');
+        if (instructorManagerBtn) instructorManagerBtn.onclick = () => this.openInstructorManager();
+
+        const closeInstructorBtn = this.container.querySelector('#closeInstructorManagerBtn');
+        if (closeInstructorBtn) closeInstructorBtn.onclick = () => this.closeInstructorManager();
+
+        const addNewInstructorBtn = this.container.querySelector('#addNewInstructorBtn');
+        if (addNewInstructorBtn) addNewInstructorBtn.onclick = () => this.addInstructorFromModal();
+
+        const newInstructorInput = this.container.querySelector('#newInstructorInput');
+        if (newInstructorInput) {
+            newInstructorInput.onkeypress = (e) => {
+                if (e.key === 'Enter') this.addInstructorFromModal();
+            }
+        }
+
+        // --- Cohort Manager ---
+        const cohortManagerBtn = this.container.querySelector('#cohortManagerBtn');
+        if (cohortManagerBtn) cohortManagerBtn.onclick = () => this.openCohortManager();
+
+        const closeCohortBtn = this.container.querySelector('#closeCohortManagerBtn');
+        if (closeCohortBtn) closeCohortBtn.onclick = () => this.closeCohortManager();
+
+        const addNewCohortBtn = this.container.querySelector('#addNewCohortBtn');
+        if (addNewCohortBtn) addNewCohortBtn.onclick = () => this.addCohortFromModal();
+
+        const newCohortInput = this.container.querySelector('#newCohortInput');
+        if (newCohortInput) {
+            newCohortInput.onkeypress = (e) => {
+                if (e.key === 'Enter') this.addCohortFromModal();
             }
         }
 
@@ -91,9 +130,7 @@ export default {
         };
     },
 
-
-
-    // Type Management Methods
+    // --- Type Management ---
     openTypeManager() {
         const modal = this.container.querySelector('#typeManagerModal');
         if (modal) {
@@ -101,77 +138,180 @@ export default {
             this.renderTypeManagerList();
         }
     },
-
     closeTypeManager() {
         const modal = this.container.querySelector('#typeManagerModal');
         if (modal) modal.style.display = 'none';
         this.render();
     },
-
     addTypeFromModal() {
         const input = this.container.querySelector('#newTypeInput');
-        const newType = input.value.trim();
-
-        if (newType && !this.lectureTypes.includes(newType)) {
-            this.lectureTypes.push(newType);
+        const newItem = input.value.trim();
+        if (newItem && !this.lectureTypes.includes(newItem)) {
+            this.lectureTypes.push(newItem);
             this.saveSettings();
             input.value = '';
             this.renderTypeManagerList();
-        } else if (this.lectureTypes.includes(newType)) {
-            alert('이미 존재하는 종류입니다.');
+        } else if (this.lectureTypes.includes(newItem)) {
+            alert('이미 존재하는 항목입니다.');
         }
     },
-
     deleteType(type) {
-        if (confirm(`"${type}" 종류를 삭제하시겠습니까? (이 종류를 사용하는 강의 데이터는 유지됩니다)`)) {
+        if (confirm(`"${type}" 항목을 삭제하시겠습니까?`)) {
             this.lectureTypes = this.lectureTypes.filter(t => t !== type);
             this.saveSettings();
             this.renderTypeManagerList();
         }
     },
-
     renderTypeManagerList() {
         const list = this.container.querySelector('#typeList');
         if (!list) return;
-
-        list.innerHTML = this.lectureTypes.map(type => `
-            <li style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:0.5rem 1rem; border-radius:6px;">
-                <span>${type}</span>
-                <div>
-                    <button class="icon-btn" onclick="app.activeModule.editType('${type}')" style="color:var(--primary-color); font-size:0.9rem; margin-right:4px;" title="이름 수정"><i class="fa-solid fa-pen"></i></button>
-                    <button class="icon-btn" onclick="app.activeModule.deleteType('${type}')" style="color:#f85149; font-size:0.9rem" title="삭제"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </li>
-        `).join('');
+        list.innerHTML = this.lectureTypes.map(t => this.createManagerItemHtml(t, 'editType', 'deleteType')).join('');
     },
-
-
-    editType(oldType) {
-        const newType = prompt("수정할 이름을 입력하세요:", oldType);
-        if (newType && newType !== oldType) {
-            if (this.lectureTypes.includes(newType)) {
+    editType(oldVal) {
+        const newVal = prompt("수정할 이름을 입력하세요:", oldVal);
+        if (newVal && newVal !== oldVal) {
+            if (this.lectureTypes.includes(newVal)) {
                 alert('이미 존재하는 이름입니다.');
                 return;
             }
-            // Update Types List
-            const idx = this.lectureTypes.indexOf(oldType);
-            if (idx !== -1) {
-                this.lectureTypes[idx] = newType;
-            }
+            const idx = this.lectureTypes.indexOf(oldVal);
+            if (idx !== -1) this.lectureTypes[idx] = newVal;
 
-            // Update Existing Items
-            let dataChanged = false;
-            this.data.forEach(item => {
-                if (item.type === oldType) {
-                    item.type = newType;
-                    dataChanged = true;
-                }
-            });
+            // Update Data
+            let changed = false;
+            this.data.forEach(item => { if (item.type === oldVal) { item.type = newVal; changed = true; } });
 
             this.saveSettings();
-            if (dataChanged) this.saveData();
+            if (changed) this.saveData();
             this.renderTypeManagerList();
         }
+    },
+
+    // --- Instructor Management ---
+    openInstructorManager() {
+        const modal = this.container.querySelector('#instructorManagerModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.renderInstructorManagerList();
+        }
+    },
+    closeInstructorManager() {
+        const modal = this.container.querySelector('#instructorManagerModal');
+        if (modal) modal.style.display = 'none';
+        this.render();
+    },
+    addInstructorFromModal() {
+        const input = this.container.querySelector('#newInstructorInput');
+        const newItem = input.value.trim();
+        if (newItem && !this.instructors.includes(newItem)) {
+            this.instructors.push(newItem);
+            this.saveSettings();
+            input.value = '';
+            this.renderInstructorManagerList();
+        } else if (this.instructors.includes(newItem)) {
+            alert('이미 존재하는 항목입니다.');
+        }
+    },
+    deleteInstructor(val) {
+        if (confirm(`"${val}" 항목을 삭제하시겠습니까?`)) {
+            this.instructors = this.instructors.filter(t => t !== val);
+            this.saveSettings();
+            this.renderInstructorManagerList();
+        }
+    },
+    renderInstructorManagerList() {
+        const list = this.container.querySelector('#instructorList');
+        if (!list) return;
+        list.innerHTML = this.instructors.map(t => this.createManagerItemHtml(t, 'editInstructor', 'deleteInstructor')).join('');
+    },
+    editInstructor(oldVal) {
+        const newVal = prompt("수정할 이름을 입력하세요:", oldVal);
+        if (newVal && newVal !== oldVal) {
+            if (this.instructors.includes(newVal)) {
+                alert('이미 존재하는 이름입니다.');
+                return;
+            }
+            const idx = this.instructors.indexOf(oldVal);
+            if (idx !== -1) this.instructors[idx] = newVal;
+
+            // Update Data
+            let changed = false;
+            this.data.forEach(item => { if (item.instructor === oldVal) { item.instructor = newVal; changed = true; } });
+
+            this.saveSettings();
+            if (changed) this.saveData();
+            this.renderInstructorManagerList();
+        }
+    },
+
+    // --- Cohort Management ---
+    openCohortManager() {
+        const modal = this.container.querySelector('#cohortManagerModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.renderCohortManagerList();
+        }
+    },
+    closeCohortManager() {
+        const modal = this.container.querySelector('#cohortManagerModal');
+        if (modal) modal.style.display = 'none';
+        this.render();
+    },
+    addCohortFromModal() {
+        const input = this.container.querySelector('#newCohortInput');
+        const newItem = input.value.trim();
+        if (newItem && !this.cohorts.includes(newItem)) {
+            this.cohorts.push(newItem);
+            this.saveSettings();
+            input.value = '';
+            this.renderCohortManagerList();
+        } else if (this.cohorts.includes(newItem)) {
+            alert('이미 존재하는 항목입니다.');
+        }
+    },
+    deleteCohort(val) {
+        if (confirm(`"${val}" 항목을 삭제하시겠습니까?`)) {
+            this.cohorts = this.cohorts.filter(t => t !== val);
+            this.saveSettings();
+            this.renderCohortManagerList();
+        }
+    },
+    renderCohortManagerList() {
+        const list = this.container.querySelector('#cohortList');
+        if (!list) return;
+        list.innerHTML = this.cohorts.map(t => this.createManagerItemHtml(t, 'editCohort', 'deleteCohort')).join('');
+    },
+    editCohort(oldVal) {
+        const newVal = prompt("수정할 이름을 입력하세요:", oldVal);
+        if (newVal && newVal !== oldVal) {
+            if (this.cohorts.includes(newVal)) {
+                alert('이미 존재하는 이름입니다.');
+                return;
+            }
+            const idx = this.cohorts.indexOf(oldVal);
+            if (idx !== -1) this.cohorts[idx] = newVal;
+
+            // Update Data
+            let changed = false;
+            this.data.forEach(item => { if (item.cohort === oldVal) { item.cohort = newVal; changed = true; } });
+
+            this.saveSettings();
+            if (changed) this.saveData();
+            this.renderCohortManagerList();
+        }
+    },
+
+    // Helper for List Items
+    createManagerItemHtml(value, editFn, deleteFn) {
+        return `
+            <li style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:0.5rem 1rem; border-radius:6px;">
+                <span>${value}</span>
+                <div>
+                    <button class="icon-btn" onclick="app.activeModule.${editFn}('${value}')" style="color:var(--primary-color); font-size:0.9rem; margin-right:4px;" title="이름 수정"><i class="fa-solid fa-pen"></i></button>
+                    <button class="icon-btn" onclick="app.activeModule.${deleteFn}('${value}')" style="color:#f85149; font-size:0.9rem" title="삭제"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </li>
+        `;
     },
 
     // Hash function for colors
@@ -183,23 +323,20 @@ export default {
             '기타': '#8b949e' // Grey
         };
         if (presets[type]) return presets[type];
+        return this.getHashColor(type);
+    },
 
+    getHashColor(str) {
         let hash = 0;
-        for (let i = 0; i < type.length; i++) {
-            hash = type.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
         const hue = Math.abs(hash % 360);
         return `hsl(${hue}, 60%, 50%)`;
     },
 
-    addLectureType() {
-        const newType = prompt("새로운 강의 종류를 입력하세요:");
-        if (newType && !this.lectureTypes.includes(newType)) {
-            this.lectureTypes.push(newType);
-            this.saveSettings();
-        } else if (this.lectureTypes.includes(newType)) {
-            alert('이미 존재하는 종류입니다.');
-        }
+    getInstructorColor(name) {
+        return this.getHashColor(name || '');
     },
 
     addItem() {
@@ -208,6 +345,8 @@ export default {
             id: Date.now(),
             date: getVal('inp_date'),
             type: getVal('inp_type'),
+            instructor: getVal('inp_instructor'),
+            cohort: getVal('inp_cohort'),
             episode: getVal('inp_episode'),
             yt: getVal('inp_yt'),
             release: getVal('inp_release'),
@@ -227,6 +366,8 @@ export default {
             const el = this.container.querySelector(`#${id}`);
             if (el) el.value = '';
         });
+        // Selects stay as they are or reset? Usually nicer to keep them or reset to first.
+        // Let's leave them for convenience or reset? Let's leave them.
     },
 
     handleSearch(query) {
@@ -258,17 +399,13 @@ export default {
     render() {
         const tbody = this.container.querySelector('#lectureTableBody');
         const countBadge = this.container.querySelector('#countBadge');
-        const typeSelect = this.container.querySelector('#inp_type');
+
+        // Populate Selects
+        this.populateSelect('inp_type', this.lectureTypes);
+        this.populateSelect('inp_instructor', this.instructors);
+        this.populateSelect('inp_cohort', this.cohorts);
 
         if (!tbody) return;
-
-        // Render Type Options
-        if (typeSelect) {
-            // Keep selected value if possible (though re-render might reset it, usually ok for this flow)
-            const currentVal = typeSelect.value;
-            typeSelect.innerHTML = this.lectureTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-            if (this.lectureTypes.includes(currentVal)) typeSelect.value = currentVal;
-        }
 
         const displayData = this.getSortedFilteredData();
         if (countBadge) countBadge.textContent = `(${displayData.length})`;
@@ -276,22 +413,13 @@ export default {
         tbody.innerHTML = displayData.map(item => {
             const isEditing = this.isGlobalEditMode;
 
-            // Helper for select options in edit mode
-            const getOptions = (currentVal) => {
-                return this.lectureTypes.map(t =>
-                    `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`
-                ).join('');
-            };
-
             if (isEditing) {
                 return `
                     <tr class="editing-row" data-id="${item.id}">
                         <td><input type="date" value="${item.date}" data-field="date"></td>
-                        <td>
-                            <select data-field="type">
-                                ${getOptions(item.type)}
-                            </select>
-                        </td>
+                        <td><select data-field="type">${this.getOptions(this.lectureTypes, item.type)}</select></td>
+                        <td><select data-field="instructor">${this.getOptions(this.instructors, item.instructor)}</select></td>
+                        <td><select data-field="cohort">${this.getOptions(this.cohorts, item.cohort)}</select></td>
                         <td><input type="text" value="${item.episode}" data-field="episode"></td>
                         <td><input type="text" value="${item.yt}" data-field="yt"></td>
                         <td><input type="text" value="${item.release}" data-field="release"></td>
@@ -306,15 +434,13 @@ export default {
                 return `
                     <tr data-id="${item.id}">
                         <td>${item.date}</td>
-                        <td><span class="badge" style="background-color:${this.getColorForType(item.type)}; padding:4px 8px; border-radius:12px; font-size:0.8rem; color:#fff">${item.type}</span></td>
+                        <td><span class="badge" style="background-color:${this.getColorForType(item.type || '')}; padding:4px 8px; border-radius:12px; font-size:0.8rem; color:#fff">${item.type || '-'}</span></td>
+                        <td><span class="badge" style="background-color:${this.getInstructorColor(item.instructor || '')}; padding:4px 8px; border-radius:4px; font-size:0.8rem; color:#fff">${item.instructor || '-'}</span></td>
+                        <td>${item.cohort || '-'}</td>
                         <td>${item.episode}</td>
-                        <td class="link-cell">
-                            ${this.renderLink(item.yt)}
-                        </td>
-                        <td class="link-cell">
-                            ${this.renderLink(item.release)}
-                        </td>
-                        <td>${item.note}</td>
+                        <td class="link-cell">${this.renderLink(item.yt)}</td>
+                        <td class="link-cell">${this.renderLink(item.release)}</td>
+                        <td>${item.note || ''}</td>
                         <td class="actions-cell">
                             <button class="icon-btn" title="수정" onclick="app.activeModule.toggleRowEdit(${item.id})"><i class="fa-solid fa-pen"></i></button>
                             <button class="icon-btn" title="삭제" onclick="app.activeModule.deleteItem(${item.id})"><i class="fa-solid fa-trash"></i></button>
@@ -324,7 +450,7 @@ export default {
             }
         }).join('');
 
-        // Re-attach event listeners for inputs if in global edit mode
+        // Re-attach listeners for edit mode
         if (this.isGlobalEditMode) {
             tbody.querySelectorAll('input, select').forEach(input => {
                 input.onchange = (e) => {
@@ -349,10 +475,24 @@ export default {
         });
     },
 
+    populateSelect(id, options) {
+        const select = this.container.querySelector(`#${id}`);
+        if (select) {
+            const currentVal = select.value;
+            select.innerHTML = options.map(t => `<option value="${t}">${t}</option>`).join('');
+            if (options.includes(currentVal)) select.value = currentVal;
+            else if (options.length > 0) select.value = options[0];
+        }
+    },
+
+    getOptions(list, currentVal) {
+        return list.map(t => `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`).join('');
+    },
+
     renderLink(url) {
         if (!url) return '-';
         return `
-            <a href="${url}" target="_blank" title="${url}"><i class="fa-brands fa-youtube"></i> 링크 열기</a>
+            <a href="${url}" target="_blank" title="${url}"><i class="fa-brands fa-youtube"></i> 열기</a>
             <button class="icon-btn" onclick="app.activeModule.copyToClipboard('${url}')" style="font-size:0.8em; margin-left:4px;"><i class="fa-regular fa-copy"></i></button>
         `;
     },
@@ -364,17 +504,6 @@ export default {
     },
 
     toggleRowEdit(id) {
-        // This creates a temporary "local" edit mode for just one row by flipping a state or 
-        // just directly replacing HTML. Since global edit uses render(), let's try to just enable global edit or 
-        // implement specific row edit. The user asked for "each row" and "all at once".
-        // For simplicity in this implementation, I'll rely on global edit mode for edits, 
-        // OR I can make a prompt-based quick edit. 
-        // Let's stick to the Global Edit Toggle design for better UX, or make this specific row editable.
-
-        // Actually, let's just use the Global Edit Mode as the primary way to edit, 
-        // but maybe the user wants to edit just one. 
-        // I'll implement a simple prompt edit for single row for now to save complexity, 
-        // or better, just switch to Global Edit Mode.
         this.isGlobalEditMode = true;
         this.render();
     },
@@ -396,7 +525,7 @@ export default {
         const idx = this.data.findIndex(i => i.id === id);
         if (idx > -1) {
             this.data[idx][field] = value;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+            this.saveData(); // Auto save on change in global edit mode
         }
     },
 
