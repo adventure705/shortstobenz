@@ -1,13 +1,14 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export class DataStore {
     constructor() {
         this.db = null;
         this.auth = null;
         this.isInitialized = false;
+        // This fixed collection name ensures all users across all devices see the SAME data.
         this.collectionName = "shorts_to_benz_global";
     }
 
@@ -21,11 +22,25 @@ export class DataStore {
             this.db = getFirestore(app);
             this.auth = getAuth(app);
 
-            await signInAnonymously(this.auth);
-            console.log("Firebase: Signed in anonymously");
-
-            this.isInitialized = true;
-            return true;
+            return new Promise((resolve) => {
+                onAuthStateChanged(this.auth, (user) => {
+                    if (user) {
+                        console.log("Firebase: Session restored (User ID:", user.uid, ")");
+                        this.isInitialized = true;
+                        resolve(true);
+                    } else {
+                        signInAnonymously(this.auth).then(() => {
+                            console.log("Firebase: New anonymous login success");
+                            this.isInitialized = true;
+                            resolve(true);
+                        }).catch((e) => {
+                            console.error("Firebase Auth Failed:", e);
+                            alert("Firebase 로그인 실패: " + e.message);
+                            resolve(false);
+                        });
+                    }
+                });
+            });
         } catch (error) {
             console.error("Firebase Init Error:", error);
             return false;
@@ -35,10 +50,10 @@ export class DataStore {
     // Realtime listener
     subscribe(key, callback) {
         if (!this.isInitialized) {
-            // Fallback for offline/uninitialized: just load once from local
+            // Fallback for offline/uninitialized
             const local = localStorage.getItem(key);
             if (local) callback(JSON.parse(local));
-            return () => { }; // No-op unsubscribe
+            return () => { };
         }
 
         const docRef = doc(this.db, this.collectionName, key);
@@ -47,22 +62,25 @@ export class DataStore {
         return onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data().data;
-                // Sync to local
                 localStorage.setItem(key, JSON.stringify(data));
                 callback(data);
             } else {
                 // If doc doesn't exist yet, check local migration
                 const local = localStorage.getItem(key);
                 if (local) {
+                    console.log(`Syncing local data to DB for ${key}...`);
                     const parsed = JSON.parse(local);
-                    this.save(key, parsed); // Upload local to DB
+                    this.save(key, parsed);
                     callback(parsed);
                 } else {
-                    callback(null); // No data
+                    callback(null);
                 }
             }
         }, (error) => {
             console.error(`Subscribe Error for ${key}:`, error);
+            if (error.code === 'permission-denied') {
+                alert(`[데이터 연동 오류] 권한이 거부되었습니다.\nFirestore 규칙을 확인해주세요. (${key})`);
+            }
         });
     }
 
