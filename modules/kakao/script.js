@@ -9,20 +9,27 @@ export default {
     searchQuery: '',
     container: null,
 
+    unsubscribeData: null,
+
     async init(container) {
         this.container = container;
-        this.loadData();
-        this.render();
         this.bindEvents();
+
+        this.unsubscribeData = app.store.subscribe(STORAGE_KEY, (val) => {
+            if (val) this.data = val;
+            else this.data = [];
+            this.render();
+        });
     },
 
-    loadData() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        this.data = raw ? JSON.parse(raw) : [];
+    cleanup() {
+        if (this.unsubscribeData) this.unsubscribeData();
     },
+
+    // loadData replaced by subscription
 
     saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+        app.store.save(STORAGE_KEY, this.data);
         this.render();
     },
 
@@ -199,7 +206,7 @@ export default {
         const idx = this.data.findIndex(i => i.id === id);
         if (idx > -1) {
             this.data[idx][field] = value;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+            this.saveData();
         }
     },
 

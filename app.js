@@ -1,3 +1,4 @@
+import { DataStore } from './firebase_service.js';
 
 const defaultSidebar = [
     {
@@ -25,38 +26,50 @@ const defaultSidebar = [
 
 class App {
     constructor() {
+        this.store = new DataStore();
+
+        // Initial load from local cache for speed
         this.navItems = JSON.parse(localStorage.getItem('lms_sidebar_items')) || defaultSidebar;
-
-        // Auto-add new modules for existing users if missing
-        if (!this.navItems.find(i => i.id === 'links')) {
-            this.navItems.push(defaultSidebar.find(i => i.id === 'links'));
-            localStorage.setItem('lms_sidebar_items', JSON.stringify(this.navItems));
-        }
-
-        if (!this.navItems.find(i => i.id === 'kakao')) {
-            this.navItems.push(defaultSidebar.find(i => i.id === 'kakao'));
-            localStorage.setItem('lms_sidebar_items', JSON.stringify(this.navItems));
-        }
+        this.ensureDefaultModules();
 
         this.sidebarNav = document.getElementById('sidebarNav');
         this.contentArea = document.getElementById('contentArea');
         this.pageTitle = document.getElementById('pageTitle');
         this.isEditingSidebar = false;
-
-        // Modules cache to store running instances if needed, or just function references
         this.activeModule = null;
 
         this.init();
     }
 
-    init() {
+    async init() {
         this.renderSidebar();
         this.setupEventListeners();
+
+        // Initialize DB
+        await this.store.init();
+
+        // Refresh Sidebar from DB
+        const remoteSidebar = await this.store.load('lms_sidebar_items');
+        if (remoteSidebar) {
+            this.navItems = remoteSidebar;
+            this.ensureDefaultModules(); // Ensure new defaults exist even in remote data
+            this.renderSidebar();
+        }
 
         // Auto load first item if exists
         if (this.navItems.length > 0) {
             this.loadModule(this.navItems[0].id);
         }
+    }
+
+    ensureDefaultModules() {
+        if (!this.navItems.find(i => i.id === 'links')) {
+            this.navItems.push(defaultSidebar.find(i => i.id === 'links'));
+        }
+        if (!this.navItems.find(i => i.id === 'kakao')) {
+            this.navItems.push(defaultSidebar.find(i => i.id === 'kakao'));
+        }
+        localStorage.setItem('lms_sidebar_items', JSON.stringify(this.navItems));
     }
 
     setupEventListeners() {
@@ -145,7 +158,7 @@ class App {
     }
 
     saveSidebar() {
-        localStorage.setItem('lms_sidebar_items', JSON.stringify(this.navItems));
+        this.store.save('lms_sidebar_items', this.navItems);
     }
 
     async loadModule(id) {

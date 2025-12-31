@@ -11,34 +11,40 @@ export default {
     container: null,
     categories: ['일반', '자료', '참고', '기타'],
 
+    unsubscribeData: null,
+    unsubscribeSettings: null,
+
     async init(container) {
         this.container = container;
-        this.loadData();
-        this.loadSettings();
-        this.render();
         this.bindEvents();
+
+        this.unsubscribeSettings = app.store.subscribe(SETTINGS_KEY, (val) => {
+            if (val) this.categories = val;
+            this.render();
+        });
+
+        this.unsubscribeData = app.store.subscribe(STORAGE_KEY, (val) => {
+            if (val) this.data = val;
+            else this.data = [];
+            this.render();
+        });
     },
 
-    loadData() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        this.data = raw ? JSON.parse(raw) : [];
+    cleanup() {
+        if (this.unsubscribeData) this.unsubscribeData();
+        if (this.unsubscribeSettings) this.unsubscribeSettings();
     },
 
-    loadSettings() {
-        const types = localStorage.getItem(SETTINGS_KEY);
-        if (types) {
-            this.categories = JSON.parse(types);
-        }
-    },
+    // loadData and loadSettings replaced by subscriptions
 
     saveSettings() {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.categories));
+        app.store.save(SETTINGS_KEY, this.categories);
         this.renderTypeManagerList();
         this.render();
     },
 
     saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+        app.store.save(STORAGE_KEY, this.data);
         this.render();
     },
 
@@ -351,7 +357,7 @@ export default {
         const idx = this.data.findIndex(i => i.id === id);
         if (idx > -1) {
             this.data[idx][field] = value;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+            this.saveData();
         }
     },
 

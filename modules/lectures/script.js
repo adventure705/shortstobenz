@@ -12,39 +12,44 @@ export default {
     instructors: [],
     cohorts: [],
 
+    unsubscribeData: null,
+    unsubscribeSettings: [],
+
     async init(container) {
         this.container = container;
-        this.loadData();
-        this.loadSettings();
-        this.render();
         this.bindEvents();
+
+        // Subscribe to Settings
+        this.unsubscribeSettings = [
+            app.store.subscribe('lms_lecture_types', (val) => { if (val) this.lectureTypes = val; this.render(); }),
+            app.store.subscribe('lms_instructors', (val) => { if (val) this.instructors = val; this.render(); }),
+            app.store.subscribe('lms_cohorts', (val) => { if (val) this.cohorts = val; this.render(); })
+        ];
+
+        // Subscribe to Data
+        this.unsubscribeData = app.store.subscribe(STORAGE_KEY, (val) => {
+            if (val) this.data = val;
+            else this.data = [];
+            this.render();
+        });
     },
 
-    loadData() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        this.data = raw ? JSON.parse(raw) : [];
+    cleanup() {
+        if (this.unsubscribeData) this.unsubscribeData();
+        this.unsubscribeSettings.forEach(unsub => unsub());
     },
 
-    loadSettings() {
-        const types = localStorage.getItem('lms_lecture_types');
-        if (types) this.lectureTypes = JSON.parse(types);
-
-        const instructors = localStorage.getItem('lms_instructors');
-        if (instructors) this.instructors = JSON.parse(instructors);
-
-        const cohorts = localStorage.getItem('lms_cohorts');
-        if (cohorts) this.cohorts = JSON.parse(cohorts);
-    },
+    // loadData and loadSettings are replaced by subscriptions
 
     saveSettings() {
-        localStorage.setItem('lms_lecture_types', JSON.stringify(this.lectureTypes));
-        localStorage.setItem('lms_instructors', JSON.stringify(this.instructors));
-        localStorage.setItem('lms_cohorts', JSON.stringify(this.cohorts));
+        app.store.save('lms_lecture_types', this.lectureTypes);
+        app.store.save('lms_instructors', this.instructors);
+        app.store.save('lms_cohorts', this.cohorts);
         this.render();
     },
 
     saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+        app.store.save(STORAGE_KEY, this.data);
         this.render();
     },
 
