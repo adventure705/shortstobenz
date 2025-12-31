@@ -205,6 +205,34 @@
                 </div>
             </div>
 
+            <!-- Filter Section -->
+            <div class="form-row"
+                style="background-color:rgba(255,255,255,0.03); padding:1rem; border-radius:8px; margin-bottom:1rem; align-items:flex-end;">
+                <div class="input-group" style="flex:1;">
+                    <label>종류 필터</label>
+                    <select id="filter_type">
+                        <option value="">전체 (All)</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex:1;">
+                    <label>강사 필터</label>
+                    <select id="filter_instructor">
+                        <option value="">전체 (All)</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex:1;">
+                    <label>기수 필터</label>
+                    <select id="filter_cohort">
+                        <option value="">전체 (All)</option>
+                    </select>
+                </div>
+                <div class="action-group">
+                    <button class="btn btn-secondary" id="resetFiltersBtn" title="필터 초기화"><i
+                            class="fa-solid fa-rotate-left"></i></button>
+                </div>
+            </div>
+
+
             <div class="data-table-container">
                 <table class="data-table">
                     <thead>

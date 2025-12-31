@@ -8,6 +8,9 @@ export default {
     isGlobalEditMode: false,
     searchQuery: '',
     container: null,
+    filterType: '',
+    filterInstructor: '',
+    filterCohort: '',
     lectureTypes: ['정규강의', '특강', '숏츠 분석', '기타'],
     instructors: [],
     cohorts: [],
@@ -131,6 +134,33 @@ export default {
                 ? '<i class="fa-solid fa-check"></i> 편집 완료'
                 : '<i class="fa-solid fa-pen"></i> 전체 수정 모드';
             toggleEdit.classList.toggle('btn-primary', this.isGlobalEditMode);
+            this.render();
+        };
+
+        // --- Filters ---
+        const filterType = this.container.querySelector('#filter_type');
+        if (filterType) filterType.onchange = (e) => {
+            this.filterType = e.target.value;
+            this.render();
+        };
+
+        const filterInstructor = this.container.querySelector('#filter_instructor');
+        if (filterInstructor) filterInstructor.onchange = (e) => {
+            this.filterInstructor = e.target.value;
+            this.render();
+        };
+
+        const filterCohort = this.container.querySelector('#filter_cohort');
+        if (filterCohort) filterCohort.onchange = (e) => {
+            this.filterCohort = e.target.value;
+            this.render();
+        };
+
+        const resetFiltersBtn = this.container.querySelector('#resetFiltersBtn');
+        if (resetFiltersBtn) resetFiltersBtn.onclick = () => {
+            this.filterType = '';
+            this.filterInstructor = '';
+            this.filterCohort = '';
             this.render();
         };
     },
@@ -383,12 +413,24 @@ export default {
     getSortedFilteredData() {
         let filtered = this.data;
 
+        // 1. Search Query
         if (this.searchQuery) {
             filtered = filtered.filter(item => {
                 return Object.values(item).some(val =>
                     String(val).toLowerCase().includes(this.searchQuery)
                 );
             });
+        }
+
+        // 2. Filters
+        if (this.filterType) {
+            filtered = filtered.filter(item => item.type === this.filterType);
+        }
+        if (this.filterInstructor) {
+            filtered = filtered.filter(item => item.instructor === this.filterInstructor);
+        }
+        if (this.filterCohort) {
+            filtered = filtered.filter(item => item.cohort === this.filterCohort);
         }
 
         return filtered.sort((a, b) => {
@@ -405,10 +447,15 @@ export default {
         const tbody = this.container.querySelector('#lectureTableBody');
         const countBadge = this.container.querySelector('#countBadge');
 
-        // Populate Selects
+        // Populate Selects (Input Form)
         this.populateSelect('inp_type', this.lectureTypes);
         this.populateSelect('inp_instructor', this.instructors);
         this.populateSelect('inp_cohort', this.cohorts);
+
+        // Populate Selects (Filters) - preserving selection
+        this.populateSelect('filter_type', this.lectureTypes, true, this.filterType);
+        this.populateSelect('filter_instructor', this.instructors, true, this.filterInstructor);
+        this.populateSelect('filter_cohort', this.cohorts, true, this.filterCohort);
 
         if (!tbody) return;
 
@@ -480,13 +527,24 @@ export default {
         });
     },
 
-    populateSelect(id, options) {
+    populateSelect(id, options, includeAll = false, selectedVal = null) {
         const select = this.container.querySelector(`#${id}`);
         if (select) {
             const currentVal = select.value;
-            select.innerHTML = options.map(t => `<option value="${t}">${t}</option>`).join('');
-            if (options.includes(currentVal)) select.value = currentVal;
-            else if (options.length > 0) select.value = options[0];
+            let html = '';
+            if (includeAll) {
+                html += `<option value="">전체 (All)</option>`;
+            }
+            html += options.map(t => `<option value="${t}">${t}</option>`).join('');
+            select.innerHTML = html;
+
+            if (selectedVal !== null) {
+                select.value = selectedVal;
+            } else if (currentVal && (options.includes(currentVal) || (includeAll && currentVal === ''))) {
+                select.value = currentVal;
+            } else if (!includeAll && options.length > 0) {
+                select.value = options[0];
+            }
         }
     },
 
