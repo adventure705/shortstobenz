@@ -15,7 +15,10 @@ export class DataStore {
     async init() {
         try {
             const response = await fetch('./firebase-config.json');
-            if (!response.ok) throw new Error("Config not found");
+            if (!response.ok) {
+                alert("설정 파일(firebase-config.json)을 찾을 수 없습니다.\n배포 환경에 파일이 포함되었는지 확인하세요.");
+                throw new Error("Config not found");
+            }
             const firebaseConfig = await response.json();
 
             const app = initializeApp(firebaseConfig);
